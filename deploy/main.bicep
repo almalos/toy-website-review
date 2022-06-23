@@ -1,3 +1,8 @@
+/*
+Protect your main branch
+https://docs.microsoft.com/en-us/learn/modules/review-azure-infrastructure-changes-using-bicep-pull-requests/3-exercise-protect-main-branch?pivots=github
+*/
+
 @description('The Azure region into which the resources should be deployed.')
 param location string = resourceGroup().location
 
