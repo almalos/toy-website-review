@@ -1,3 +1,8 @@
+/*
+Protect your main branch
+https://docs.microsoft.com/en-us/learn/modules/review-azure-infrastructure-changes-using-bicep-pull-requests/3-exercise-protect-main-branch?pivots=github
+*/
+
 @description('The Azure region into which the resources should be deployed.')
 param location string = resourceGroup().location
 
@@ -15,6 +20,7 @@ param storageAccountName string = 'toylaunch${uniqueString(resourceGroup().id)}'
 param environmentType string
 
 var storageAccountSkuName = (environmentType == 'prod') ? 'Standard_GRS' : 'Standard_LRS'
+var processOrderQueueName = 'processorder'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountName
@@ -26,6 +32,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   properties: {
     accessTier: 'Hot'
   }
+
+  resource queueServices 'queueServices' existing = {
+    name: 'default'
+
+    resource processOrderQueue 'queues' = {
+      name: processOrderQueueName
+    }
+  }
 }
 
 module appService 'modules/appService.bicep' = {
@@ -33,6 +47,8 @@ module appService 'modules/appService.bicep' = {
   params: {
     location: location
     appServiceAppName: appServiceAppName
+    storageAccountName: storageAccount.name
+    processOrderQueueName: storageAccount::queueServices::processOrderQueue.name
     environmentType: environmentType
   }
 }
